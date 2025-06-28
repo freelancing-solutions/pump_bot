@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}{{ coin.name }} ({{ coin.symbol }}) - Coin Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Coin Info Header -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-2 text-center">
+                        {% if coin.image_url %}
+                        <img src="{{ coin.image_url }}" alt="{{ coin.name }}" class="img-fluid rounded-circle" style="max-width: 80px;">
+                        {% else %}
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <i class="fas fa-coins fa-2x"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h3>{{ coin.name }} <small class="text-muted">({{ coin.symbol }})</small></h3>
+                        <p class="text-muted mb-1">{{ coin.description or 'No description available' }}</p>
+                        <small class="text-muted">Mint: {{ coin.mint_address }}</small>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <h4>${{ "%.6f"|format(coin.price) }}</h4>
+                        <span class="{% if coin.change_24h >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if coin.change_24h >= 0 %}+{% endif %}{{ "%.2f"|format(coin.change_24h) }}%
+                        </span>
+                        <div class="mt-2">
+                            {% if coin.website %}
+                            <a href="{{ coin.website }}" target="_blank" class="btn btn-sm btn-outline-info me-1">
+                                <i class="fas fa-globe"></i>
+                            </a>
+                            {% endif %}
+                            {% if coin.twitter %}
+                            <a href="{{ coin.twitter }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                <i class="fab fa-twitter"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-info">${{ "%.2f"|format(coin.volume_24h) }}</h5>
+                <small class="text-muted">24h Volume</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-warning">${{ "%.0f"|format(coin.market_cap) }}</h5>
+                <small class="text-muted">Market Cap</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-success">{{ "%.0f"|format(coin.total_supply) }}</h5>
+                <small class="text-muted">Total Supply</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 mb-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-primary">{{ social_metrics.get('holders', 0) }}</h5>
+                <small class="text-muted">Holders</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Price Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-chart-line"></i> Price Chart (24h)</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="priceChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Metrics -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-share-alt"></i> Social Metrics</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Social Score</span>
+                        <strong>{{ social_metrics.get('score', 0) }}/100</strong>
+                    </div>
+                    <div class="progress mt-1">
+                        <div class="progress-bar" style="width: {{ social_metrics.get('score', 0) }}%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Mentions (24h)</span>
+                        <strong>{{ social_metrics.get('mentions_24h', 0) }}</strong>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <span>Sentiment</span>
+                        <span class="{% if social_metrics.get('sentiment', 0) > 0 %}text-success{% elif social_metrics.get('sentiment', 0) < 0 %}text-danger{% else %}text-muted{% endif %}">
+                            {% if social_metrics.get('sentiment', 0) > 0 %}Positive{% elif social_metrics.get('sentiment', 0) < 0 %}Negative{% else %}Neutral{% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trade History -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="fas fa-history"></i> Recent Trades</h6>
+            </div>
+            <div class="card-body">
+                {% if trades %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Price</th>
+                                <th>Total</th>
+                                <th>Trader</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trade in trades %}
+                            <tr>
+                                <td>{{ trade.timestamp.strftime('%m/%d %H:%M:%S') }}</td>
+                                <td>
+                                    <span class="badge {% if trade.type == 'BUY' %}bg-success{% else %}bg-danger{% endif %}">
+                                        {{ trade.type }}
+                                    </span>
+                                </td>
+                                <td>{{ "%.2f"|format(trade.amount) }} {{ coin.symbol }}</td>
+                                <td>${{ "%.6f"|format(trade.price) }}</td>
+                                <td>${{ "%.4f"|format(trade.amount * trade.price) }}</td>
+                                <td>
+                                    <small class="text-muted">{{ trade.trader_address[:8] }}...{{ trade.trader_address[-4:] }}</small>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No trades yet</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Price Chart
+const ctx = document.getElementById('priceChart').getContext('2d');
+const historicalData = {{ historical_data | tojson }};
+
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: historicalData.map(d => new Date(d.timestamp).toLocaleTimeString()),
+        datasets: [{
+            label: 'Price ($)',
+            data: historicalData.map(d => d.price),
+            borderColor: '#3fb950',
+            backgroundColor: 'rgba(63, 185, 80, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                labels: { color: '#c9d1d9' }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: '#8b949e' },
+                grid: { color: '#30363d' }
+            },
+            y: {
+                ticks: { color: '#8b949e' },
+                grid: { color: '#30363d' }
+            }
+        }
+    }
+});
+
+// Auto-refresh data
+setInterval(function() {
+    fetch('/api/trades/{{ coin.mint_address }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Trade data updated');
+                // Update table if needed
+            }
+        })
+        .catch(error => console.error('Update error:', error));
+}, 15000);
+</script>
+{% endblock %}

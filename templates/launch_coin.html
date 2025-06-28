@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Crypto Trading{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- System Stats -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line"></i> System Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-success">{{ system_stats.get('active_coins', 0) }}</h4>
+                            <small>Active Coins</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-info">${{ "%.2f"|format(system_stats.get('total_volume', 0)) }}</h4>
+                            <small>24h Volume</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-warning">{{ system_stats.get('total_trades', 0) }}</h4>
+                            <small>Total Trades</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <h4 class="text-primary">${{ "%.2f"|format(system_stats.get('total_profit', 0)) }}</h4>
+                            <small>Total P&L</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Coins -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h5><i class="fas fa-coins"></i> Active Coins</h5>
+                <a href="{{ url_for('launch_coin') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Launch New
+                </a>
+            </div>
+            <div class="card-body">
+                {% if coins %}
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>24h Change</th>
+                                <th>Volume</th>
+                                <th>Market Cap</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for coin in coins %}
+                            <tr>
+                                <td><strong>{{ coin.symbol }}</strong></td>
+                                <td>{{ coin.name }}</td>
+                                <td>${{ "%.6f"|format(coin.price) }}</td>
+                                <td>
+                                    <span class="{% if coin.change_24h >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ "%.2f"|format(coin.change_24h) }}%
+                                    </span>
+                                </td>
+                                <td>${{ "%.2f"|format(coin.volume_24h) }}</td>
+                                <td>${{ "%.0f"|format(coin.market_cap) }}</td>
+                                <td>
+                                    <a href="{{ url_for('coin_details', mint_address=coin.mint_address) }}" 
+                                       class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-coins fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">No active coins found. <a href="{{ url_for('launch_coin') }}">Launch your first coin</a>!</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Trades -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-exchange-alt"></i> Recent Trades</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_trades %}
+                <div class="list-group list-group-flush">
+                    {% for trade in recent_trades %}
+                    <div class="list-group-item list-group-item-dark">
+                        <div class="d-flex justify-content-between">
+                            <strong>{{ trade.symbol }}</strong>
+                            <span class="{% if trade.type == 'BUY' %}text-success{% else %}text-danger{% endif %}">
+                                {{ trade.type }}
+                            </span>
+                        </div>
+                        <small class="text-muted">
+                            {{ trade.amount }} @ ${{ "%.6f"|format(trade.price) }}
+                        </small>
+                        <div class="text-end">
+                            <small class="text-muted">{{ trade.timestamp.strftime('%H:%M') }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No recent trades</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh dashboard every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
+
+// Real-time updates via API
+function updateDashboard() {
+    fetch('/api/coins')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Dashboard updated:', data.timestamp);
+            }
+        })
+        .catch(error => console.error('Update error:', error));
+}
+
+// Update every 10 seconds
+setInterval(updateDashboard, 10000);
+</script>
+{% endblock %}
