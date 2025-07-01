@@ -21,23 +21,28 @@ logger = logging.getLogger(__name__)
 class AIClient:
     def __init__(self, settings: Config):
         # DeepSeek Client Initialization
-        self.deepseek_api_key = settings.DEEPSEEK_API_KEY
+        self.settings = settings
+        self.deepseek_api_key = self.settings.DEEPSEEK_API_KEY
+        self.deepseek_model = self.settings.DEEPSEEK_MODEL
+        self.openai_api_key = self.settings.OPENAPI_KEY
+
         if not self.deepseek_api_key:
             raise ValueError("DEEPSEEK_API_KEY must be set in .env")
 
+        # Creating Deepseek Client
         self.deepseek_client = OpenAI(
             api_key=self.deepseek_api_key,
             base_url="https://api.deepseek.com/v1"
         )
-        self.deepseek_model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
         # OpenAI (DALL-E 3) Client Initialization
-        self.openai_api_key = os.getenv("OPENAI_API_KEY")
         if not self.openai_api_key:
             logger.warning("OPENAI_API_KEY not set. DALL-E 3 image generation disabled.")
             self.openai_client = None
         else:
             self.openai_client = OpenAI(api_key=self.openai_api_key)
+
+        # TODO  - we can add OpenRouter Client here
 
     def _call_deepseek(self, system_prompt: str, user_prompt: str, temperature: float = 0.7,
                        max_tokens: int = 1000, retries: int = 3) -> str:

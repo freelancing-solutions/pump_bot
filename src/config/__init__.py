@@ -26,6 +26,8 @@ class Config(BaseSettings):
     PUMP_API_KEY: str = Field(..., alias="PUMP_API_KEY")
     OPENROUTER_API_KEY: str = Field(..., alias="OPENROUTER_API_KEY")
     DEEPSEEK_API_KEY: str = Field(..., alias="DEEPSEEK_API_KEY")
+    OPENAPI_KEY:str = Field(..., alias="OPENAPI_KEY")
+    DEEPSEEK_MODEL: str = Field(..., alias="DEEPSEEK_MODEL")
     DB_PATH: str = Field(..., alis="DB_PATH")
     TELEGRAM_BOT_TOKEN: str = Field(..., alias="TELEGRAM_BOT_TOKEN")
     DISCORD_BOT_TOKEN: str = Field(..., alias="DISCORD_BOT_TOKEN")
