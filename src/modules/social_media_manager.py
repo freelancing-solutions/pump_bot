@@ -4,15 +4,15 @@ from src.config import Config  # Assuming you add n8n webhook URLs to Config
 
 
 class SocialMediaManager:
-    def __init__(self):
+    def __init__(self, settings: Config):
         self.n8n_webhook_urls = {
-            "twitter_post": Config.N8N_TWITTER_WEBHOOK_URL,
-            "telegram_alert": Config.N8N_TELEGRAM_WEBHOOK_URL,
-            "discord_update": Config.N8N_DISCORD_WEBHOOK_URL,
+            "twitter_post": settings.N_EIGHT_N.N8N_TWITTER_WEBHOOK_URL,
+            "telegram_alert": settings.N_EIGHT_N.N8N_TELEGRAM_WEBHOOK_URL,
+            "discord_update": settings.N_EIGHT_N.N8N_DISCORD_WEBHOOK_URL,
             # Add more specific webhooks if needed, e.g., for pre-launch marketing
-            "twitter_pre_launch_day7": Config.N8N_TWITTER_PRE_LAUNCH_DAY7_WEBHOOK_URL,
-            "twitter_pre_launch_day1": Config.N8N_TWITTER_PRE_LAUNCH_DAY1_WEBHOOK_URL,
-            "telegram_pre_launch_day3": Config.N8N_TELEGRAM_PRE_LAUNCH_DAY3_WEBHOOK_URL,
+            "twitter_pre_launch_day7": settings.N_EIGHT_N.N8N_TWITTER_PRE_LAUNCH_DAY7_WEBHOOK_URL,
+            "twitter_pre_launch_day1": settings.N_EIGHT_N.N8N_TWITTER_PRE_LAUNCH_DAY1_WEBHOOK_URL,
+            "telegram_pre_launch_day3": settings.N_EIGHT_N.N8N_TELEGRAM_PRE_LAUNCH_DAY3_WEBHOOK_URL,
         }
 
     def _send_webhook(self, url_key, payload):

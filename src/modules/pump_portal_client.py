@@ -3,12 +3,14 @@ import requests
 from typing import Dict, Any, Optional
 import logging
 
+from src.config import Config
+
 logger = logging.getLogger(__name__)
 
 
 class PumpPortalClient:
-    def __init__(self, api_key: str):
-        self.api_key = api_key
+    def __init__(self, settings: Config):
+        self.api_key = settings.PUMP_API_KEY
         self.base_url = os.getenv("PUMP_PORTAL_BASE_URL", "https://api.pumpportal.fun")
         self.session = requests.Session()
         self.session.headers.update({

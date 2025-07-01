@@ -9,6 +9,8 @@ import time
 from typing import Optional, Dict, List, Union
 import logging
 
+from src.config import Config
+
 load_dotenv()
 
 # Configure logging
@@ -17,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 
 class AIClient:
-    def __init__(self):
+    def __init__(self, settings: Config):
         # DeepSeek Client Initialization
-        self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
+        self.deepseek_api_key = settings.DEEPSEEK_API_KEY
         if not self.deepseek_api_key:
             raise ValueError("DEEPSEEK_API_KEY must be set in .env")
 

@@ -8,7 +8,7 @@ from datetime import datetime
 from contextlib import asynccontextmanager
 
 # Custom Modules
-from src.config import Config
+from src.config import config_instance, Config
 from src.modules.solana_client import SolanaClient
 from src.modules.pump_portal_client import PumpPortalClient
 from src.modules.ai_client import AIClient
@@ -35,6 +35,7 @@ class AppManager:
         self.background_tasks = []
         self.websocket_task = None
         self.is_running = False
+        self.settings = config_instance()
 
         # Initialize components
         self._init_components()
@@ -43,17 +44,14 @@ class AppManager:
         """Initialize all application components."""
         try:
             # Core clients
-            self.solana_client = SolanaClient(Config.SOLANA_RPC_URL)
-            self.pump_portal_client = PumpPortalClient(Config.PUMPP_API_KEY)
-            self.ai_client = AIClient(Config.OPENROUTER_API_KEY)
-            self.db_manager = DBManager(Config.DATABASE_PATH)
+
+            self.solana_client = SolanaClient(settings=self.settings)
+            self.pump_portal_client = PumpPortalClient(settings=self.settings)
+            self.ai_client = AIClient(settings=self.settings)
+            self.db_manager = DBManager(settings=self.settings)
 
             # Social media manager
-            self.social_media_manager = SocialMediaManager(
-                twitter_creds=self._get_twitter_creds(),
-                telegram_token=Config.TELEGRAM_BOT_TOKEN,
-                discord_token=Config.DISCORD_BOT_TOKEN
-            )
+            self.social_media_manager = SocialMediaManager(settings=self.settings)
 
             # Core managers
             self.trade_manager = TradeManager(
@@ -67,9 +65,6 @@ class AppManager:
             self.launch_manager = LaunchManager(
                 solana_client=self.solana_client,
                 pump_portal_client=self.pump_portal_client,
-                db_manager=self.db_manager,
-                ai_client=self.ai_client,
-                social_media_manager=self.social_media_manager
             )
 
             logger.info("All components initialized successfully")
@@ -81,10 +76,10 @@ class AppManager:
     def _get_twitter_creds(self):
         """Get Twitter credentials from config."""
         return {
-            'api_key': Config.TWITTER_API_KEY,
-            'api_secret': Config.TWITTER_API_SECRET,
-            'access_token': Config.TWITTER_ACCESS_TOKEN,
-            'access_token_secret': Config.TWITTER_ACCESS_TOKEN_SECRET
+            'api_key': self.settings.TWITTER.TWITTER_API_KEY,
+            'api_secret': self.settings.TWITTER.TWITTER_API_SECRET,
+            'access_token': self.settings.TWITTER.TWITTER_ACCESS_TOKEN,
+            'access_token_secret': self.settings.TWITTER.TWITTER_ACCESS_TOKEN_SECRET
         }
 
     async def start_websocket_listener(self):
@@ -190,8 +185,9 @@ app_manager = AppManager()
 def create_app():
     """Application factory."""
     app = Flask(__name__)
-    app.config.from_object(Config)
-    app.secret_key = Config.SECRET_KEY or os.urandom(24)
+
+    app.config.from_object(config_instance())
+    app.secret_key = config_instance().SECRET_KEY or os.urandom(24)
 
     # Initialize database
     try:

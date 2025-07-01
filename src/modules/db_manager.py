@@ -2,12 +2,15 @@ import sqlite3
 from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Tuple
 
+from src.config import Config
+
+
 class DBManager:
-    def __init__(self, db_path: str):
-        self.db_path = db_path
-        self._init_db()
+    def __init__(self, settings: Config):
+        self.db_path = settings.DB_PATH
+
     
-    def _init_db(self):
+    def init_db(self):
         """Initialize database connection and create tables if needed."""
         with self.get_connection() as conn:
             conn.execute("PRAGMA foreign_keys = ON")

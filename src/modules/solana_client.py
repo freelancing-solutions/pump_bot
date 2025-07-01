@@ -4,10 +4,12 @@ from typing import Dict, List, Optional, Any
 import base64
 import base58
 
+from src.config import Config
+
 
 class SolanaClient:
-    def __init__(self, rpc_url: str):
-        self.rpc_url = rpc_url
+    def __init__(self, settings: Config):
+        self.rpc_url = settings.SOLANA_RPC_URL
         self.session = requests.Session()
         self.session.headers.update({'Content-Type': 'application/json'})
 

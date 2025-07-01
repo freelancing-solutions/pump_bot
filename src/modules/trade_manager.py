@@ -3,6 +3,13 @@ from enum import Enum
 from dataclasses import dataclass
 from datetime import datetime
 
+from src.modules.ai_client import AIClient
+from src.modules.db_manager import DBManager
+from src.modules.pump_portal_client import PumpPortalClient
+from src.modules.social_media_manager import SocialMediaManager
+from src.modules.solana_client import SolanaClient
+
+
 class TradeType(Enum):
     BUY = "buy"
     SELL = "sell"
@@ -30,7 +37,13 @@ class Position:
     market_value: float
 
 class TradeManager:
-    def __init__(self):
+    def __init__(self, solana_client: SolanaClient, pump_portal_client: PumpPortalClient, db_manager: DBManager, ai_client: AIClient, social_media_manager: SocialMediaManager):
+        self.solana_client = solana_client
+        self.pump_portal_client=pump_portal_client
+        self.db_manager=db_manager
+        self.ai_client= ai_client
+        self.social_media_manager=social_media_manager
+
         self.trades: Dict[str, Trade] = {}
         self.positions: Dict[str, Position] = {}
         self.balance: float = 0.0
